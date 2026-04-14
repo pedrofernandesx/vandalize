@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sobre — Vandalize</title>
+  <link rel="stylesheet" href="src/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* HERO */
+    .sobre-hero {
+      background: var(--black);
+      padding: 10rem 0 5rem;
+      border-bottom: 1px solid #1e1e1e;
+    }
+    .sobre-hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 4.5vw, 4rem);
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.08;
+      max-width: 780px;
+      margin-bottom: 2rem;
+    }
+    .sobre-hero-title em {
+      font-style: italic;
+      color: var(--gold);
+    }
+    .sobre-hero-intro {
+      max-width: 640px;
+    }
+    .sobre-hero-intro p {
+      font-size: 1.1rem;
+      line-height: 1.85;
+      color: var(--text-body);
+      margin-bottom: 1.2rem;
+    }
+    .sobre-hero-intro p:last-child { margin-bottom: 0; }
+
+    /* SEÇÃO GENÉRICA ESCURA */
+    .sobre-section-dark {
+      background: var(--black);
+      padding: 6rem 0;
+      border-top: 1px solid #1e1e1e;
+    }
+
+    /* SEÇÃO GENÉRICA CLARA */
+    .sobre-section-light {
+      background: var(--cream);
+      padding: 6rem 0;
+    }
+
+    /* SEÇÃO CINZA */
+    .sobre-section-mid {
+      background: var(--dark2);
+      padding: 6rem 0;
+    }
+
+    /* LAYOUT 2 COLUNAS */
+    .sobre-two-col {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 5rem;
+      align-items: start;
+    }
+    .sobre-col-sticky {
+      position: sticky;
+      top: 5rem;
+    }
+    .sobre-col-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-top: 0.75rem;
+    }
+    .sobre-col-title.dark { color: var(--black); }
+    .sobre-col-title.light { color: #fff; }
+
+    .sobre-col-body p {
+      font-size: 1.05rem;
+      line-height: 1.85;
+      margin-bottom: 1.5rem;
+    }
+    .sobre-col-body p:last-child { margin-bottom: 0; }
+    .sobre-col-body.on-dark p { color: var(--text-body); }
+    .sobre-col-body.on-light p { color: #333; }
+
+    /* O NOME */
+    .nome-inner { max-width: 820px; }
+    .nome-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.9rem, 3vw, 2.6rem);
+      font-weight: 900;
+      font-style: italic;
+      color: #fff;
+      margin: 0.75rem 0 1.5rem;
+      line-height: 1.15;
+    }
+    .nome-body p {
+      font-size: 1.05rem;
+      line-height: 1.85;
+      color: var(--text-body);
+      margin-bottom: 1.5rem;
+    }
+    .nome-body p:last-child { margin-bottom: 0; }
+
+    /* PRINCÍPIOS */
+    .principios-grid {
+      background: #161616;
+      border: 1px solid #222;
+      padding: 3rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem 5rem;
+      margin-top: 2rem;
+    }
+    .principio-title {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.6rem;
+    }
+    .principio-text {
+      color: #888;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 900px) {
+      .sobre-two-col { grid-template-columns: 1fr; gap: 2rem; }
+      .sobre-col-sticky { position: static; }
+      .principios-grid { grid-template-columns: 1fr; gap: 2rem; padding: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="nav-logo">VANDALIZE</a>
+  <ul class="nav-links">
+    <li><a href="index.html">INÍCIO</a></li>
+    <li><a href="index.html?cat=musica">MÚSICA</a></li>
+    <li><a href="index.html?cat=carnaval">CARNAVAL</a></li>
+    <li><a href="index.html?cat=investigacao">INVESTIGAÇÃO</a></li>
+    <li><a href="sobre.html" class="active">SOBRE</a></li>
+  </ul>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="sobre-hero">
+  <div class="container">
+    <p class="section-label" style="color:var(--gold);margin-bottom:1.2rem;">SOBRE O VANDALIZE</p>
+    <h1 class="sobre-hero-title">Jornalismo que <em>vandaliza</em> o óbvio</h1>
+    <div class="title-bar" style="margin-bottom:2.5rem;"></div>
+    <div class="sobre-hero-intro">
+      <p>Somos o Vandalize — o jornal investigativo que vai além da superfície. Enquanto outros cobrem eventos, nós desvendamos os bastidores.</p>
+      <p>Somos independentes. Sem patrocinadores que ditem pauta. Sem pressão política. Só jornalismo honesto sobre a cultura mais rica do Brasil.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── NOSSA MISSÃO ── -->
+<section class="sobre-section-dark">
+  <div class="container sobre-two-col">
+    <div class="sobre-col-sticky">
+      <p class="section-label" style="color:var(--gold);">NOSSA MISSÃO</p>
+      <h2 class="sobre-col-title light">A capital da cultura negra nas Américas</h2>
+    </div>
+    <div class="sobre-col-body on-dark">
+      <p>Salvador não é só a capital da Bahia. É a capital da cultura negra nas Américas. É a cidade da música, o berço do axé, do samba-reggae, da capoeira, do candomblé. Uma cidade onde cada esquina conta uma história e cada tambor ecoa séculos de tradição.</p>
+      <p>Fazemos jornalismo investigativo voltado para a cultura. Mas nossa voz não tem fronteiras. O Vandalize existe para contar as histórias de uma juventude preta, periférica e LGBTQIAPN+ que dita o ritmo da cultura contemporânea em qualquer lugar.</p>
+      <p>Não queremos ser mais um portal de notícias. O Vandalize nasceu para contar histórias do jeito certo: com profundidade, sem pressa, sem concessões.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── O NOME ── -->
+<section class="sobre-section-mid">
+  <div class="container">
+    <div class="nome-inner">
+      <p class="section-label" style="color:var(--gold);">O NOME</p>
+      <h2 class="nome-title">"Vandalize" não é apologia à destruição.</h2>
+      <div class="nome-body">
+        <p>É um convite à transgressão criativa. Vandalizar, para nós, é questionar o que está posto, pichar verdades nas paredes do poder, grafitar novos sentidos na cidade.</p>
+        <p>Assim como a arte urbana transforma muros cinzas em galerias a céu aberto, nosso jornalismo busca transformar informação em consciência.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── NOSSOS PRINCÍPIOS ── -->
+<section class="sobre-section-dark">
+  <div class="container">
+    <p class="section-label" style="color:var(--gold);">NOSSOS PRINCÍPIOS</p>
+    <div class="principios-grid">
+      <div class="principio-item">
+        <h3 class="principio-title">Independência</h3>
+        <p class="principio-text">Não recebemos patrocínio de quem queremos investigar.</p>
+      </div>
+      <div class="principio-item">
+        <h3 class="principio-title">Profundidade</h3>
+        <p class="principio-text">Preferimos uma grande reportagem por semana a dez notas por dia.</p>
+      </div>
+      <div class="principio-item">
+        <h3 class="principio-title">Diversidade</h3>
+        <p class="principio-text">Nossa redação reflete a Salvador real — negra, plural, vibrante.</p>
+      </div>
+      <div class="principio-item">
+        <h3 class="principio-title">Transparência</h3>
+        <p class="principio-text">Se erramos, admitimos. Se acertamos, provamos.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MANIFESTO + STATS ── -->
+<section class="section-manifesto">
+  <div class="container manifesto-inner">
+    <div class="manifesto-text">
+      <p class="section-label">MANIFESTO</p>
+      <h2 class="manifesto-title">Salvador merece um jornalismo à altura da sua cultura</h2>
+      <p class="manifesto-body">Somos o Vandalize — o jornal investigativo que vai além da superfície. Enquanto outros cobrem eventos, nós desvendamos os bastidores. A cena musical de Salvador é uma das mais ricas do planeta, e ela merece reportagens que fazem jus à sua grandeza.</p>
+      <a href="mailto:redacao@vandalize.com.br" class="link-arrow">ENTRE EM CONTATO →</a>
+    </div>
+    <div class="manifesto-stats">
+      <div class="stat-card"><span class="stat-number">+200</span><span class="stat-label">MATÉRIAS</span></div>
+      <div class="stat-card"><span class="stat-number">8</span><span class="stat-label">EDITORIAS</span></div>
+      <div class="stat-card"><span class="stat-number">24h</span><span class="stat-label">COBERTURA</span></div>
+      <div class="stat-card"><span class="stat-number">SSA</span><span class="stat-label">SALVADOR, BA</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── NEWSLETTER ── -->
+<section class="section-newsletter">
+  <div class="container newsletter-inner">
+    <h3 class="newsletter-title">Fique por dentro de tudo</h3>
+    <p class="newsletter-sub">Sem spam, só conteúdo de verdade.</p>
+    <div class="newsletter-form">
+      <input type="email" placeholder="seu@email.com" class="newsletter-input" id="nlEmail" />
+      <button class="newsletter-btn" id="nlBtn">→</button>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <span class="footer-logo">VANDALIZE</span>
+      <p>O jornal investigativo de cultura que Salvador merece. Desvendando os bastidores da cena musical, artística e cultural da capital baiana.</p>
+    </div>
+    <div class="footer-col">
+      <p class="footer-col-title">CATEGORIAS</p>
+      <a href="index.html?cat=musica">Música</a>
+      <a href="index.html?cat=carnaval">Carnaval</a>
+      <a href="index.html?cat=capoeira">Capoeira</a>
+      <a href="index.html?cat=noite">Noite</a>
+      <a href="index.html?cat=investigacao">Investigação</a>
+    </div>
+    <div class="footer-col">
+      <p class="footer-col-title">CONTATO</p>
+      <a href="mailto:redacao@vandalize.com.br">redacao@vandalize.com.br</a>
+      <span>Salvador, Bahia — Brasil</span>
+      <span>Pelourinho, Centro Histórico</span>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Vandalize. Todos os direitos reservados.</span>
+    <span class="footer-tagline">JORNALISMO CULTURAL INDEPENDENTE</span>
+  </div>
+</footer>
+
+<script src="src/app.js"></script>
+</body>
+</html>

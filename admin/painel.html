@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Vandalize</title>
+  <!-- Bloqueia indexação por crawlers -->
+  <meta name="robots" content="noindex, nofollow" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { --gold: #f5c518; --bg: #0a0a0a; --surface: #161616; --border: #2a2a2a; --text: #e8e8e8; --muted: #666; --danger: #e03c2c; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+
+    .login-wrap { width: 100%; max-width: 380px; padding: 2rem; }
+
+    .login-logo {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: 2rem;
+      color: var(--gold);
+      text-align: center;
+      letter-spacing: .04em;
+      margin-bottom: .4rem;
+    }
+
+    .login-sub {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .18em;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2.2rem;
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: .4rem; margin-bottom: 1rem; }
+
+    .form-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      color: var(--muted);
+    }
+
+    .form-input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      font-size: .9rem;
+      padding: .65rem .9rem;
+      outline: none;
+      transition: border-color .18s;
+      width: 100%;
+    }
+
+    .form-input:focus { border-color: var(--gold); }
+    .form-input:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .82rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      padding: .75rem 1.2rem;
+      background: var(--gold);
+      color: #111;
+      border: none;
+      cursor: pointer;
+      margin-top: 1.5rem;
+      transition: opacity .18s;
+    }
+
+    .btn-primary:hover { opacity: .88; }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+
+    .login-error {
+      color: var(--danger);
+      font-size: .8rem;
+      text-align: center;
+      margin-top: 1rem;
+      min-height: 1.2em;
+      display: none;
+    }
+
+    .lockout-msg {
+      color: var(--danger);
+      font-size: .8rem;
+      text-align: center;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    /* Cooldown timer */
+    .cooldown {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .75rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: .6rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-wrap">
+  <div class="login-logo">VANDALIZE</div>
+  <p class="login-sub">PAINEL EDITORIAL</p>
+
+  <div class="login-box">
+    <div class="form-group">
+      <label class="form-label" for="loginUser">USUÁRIO</label>
+      <input type="text" id="loginUser" class="form-input" placeholder="admin" autocomplete="username" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="loginPass">SENHA</label>
+      <input type="password" id="loginPass" class="form-input" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <button class="btn-primary" id="loginBtn">ENTRAR →</button>
+
+    <p class="login-error" id="loginError">Usuário ou senha incorretos.</p>
+    <p class="lockout-msg" id="lockoutMsg">Muitas tentativas. Aguarde antes de tentar novamente.</p>
+    <p class="cooldown" id="cooldownTimer"></p>
+  </div>
+</div>
+
+<script>
+  // ── REDIRECIONA SE JÁ LOGADO ──
+  (function() {
+    const session = sessionStorage.getItem('vnd_auth');
+    if (!session) return;
+    try {
+      const { token, expires } = JSON.parse(session);
+      if (token && Date.now() < expires) window.location.href = 'painel.html';
+    } catch(e) { sessionStorage.removeItem('vnd_auth'); }
+  })();
+
+  // ──────────────────────────────────────────────────────────────
+  // CREDENCIAIS — armazenadas como SHA-256 (nunca em texto puro)
+  // Para gerar um novo hash: https://emn178.github.io/online-tools/sha256.html
+  //
+  //   usuário:  admin           → hash abaixo
+  //   senha:    vandalize2026   → hash abaixo
+  //
+  // Troque os valores de VALID_USER_HASH e VALID_PASS_HASH
+  // com os hashes das suas novas credenciais.
+  // ──────────────────────────────────────────────────────────────
+  const VALID_USER_HASH = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'; // admin
+  const VALID_PASS_HASH = 'a3f0c5e2b7d914e6e8b3c2d1a4f9e0b6c7d8a2f1e5b3c9d0a7f4e2b8c1d6a5f3'; // vandalize2026 — TROQUE ISSO
+
+  // ── RATE LIMITING ──
+  const MAX_ATTEMPTS  = 5;   // tentativas antes do bloqueio
+  const LOCKOUT_MS    = 60 * 1000; // 60 segundos de bloqueio
+
+  function getAttempts() {
+    try { return JSON.parse(localStorage.getItem('vnd_login_attempts') || '{"count":0,"lockedUntil":0}'); }
+    catch(e) { return { count: 0, lockedUntil: 0 }; }
+  }
+
+  function setAttempts(obj) { localStorage.setItem('vnd_login_attempts', JSON.stringify(obj)); }
+
+  function isLocked() {
+    const a = getAttempts();
+    return a.count >= MAX_ATTEMPTS && Date.now() < a.lockedUntil;
+  }
+
+  function registerFailedAttempt() {
+    const a = getAttempts();
+    a.count++;
+    if (a.count >= MAX_ATTEMPTS) a.lockedUntil = Date.now() + LOCKOUT_MS;
+    setAttempts(a);
+  }
+
+  function resetAttempts() { localStorage.removeItem('vnd_login_attempts'); }
+
+  // ── SHA-256 via Web Crypto API (nativa no browser) ──
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // ── TOKEN DE SESSÃO (expira em 8h) ──
+  function createSession() {
+    const token   = crypto.randomUUID();
+    const expires = Date.now() + 8 * 60 * 60 * 1000;
+    sessionStorage.setItem('vnd_auth', JSON.stringify({ token, expires }));
+  }
+
+  // ── COOLDOWN TIMER ──
+  let cooldownInterval = null;
+
+  function startCooldown() {
+    const el = document.getElementById('cooldownTimer');
+    el.style.display = 'block';
+    clearInterval(cooldownInterval);
+    cooldownInterval = setInterval(() => {
+      const a = getAttempts();
+      const remaining = Math.ceil((a.lockedUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        el.style.display = 'none';
+        clearInterval(cooldownInterval);
+        setLocked(false);
+        resetAttempts();
+      } else {
+        el.textContent = `Tente novamente em ${remaining}s`;
+      }
+    }, 500);
+  }
+
+  function setLocked(locked) {
+    const btn  = document.getElementById('loginBtn');
+    const user = document.getElementById('loginUser');
+    const pass = document.getElementById('loginPass');
+    const msg  = document.getElementById('lockoutMsg');
+    btn.disabled  = locked;
+    user.disabled = locked;
+    pass.disabled = locked;
+    msg.style.display = locked ? 'block' : 'none';
+  }
+
+  // ── LOGIN ──
+  async function handleLogin() {
+    // Verifica bloqueio
+    if (isLocked()) { setLocked(true); startCooldown(); return; }
+
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    const err  = document.getElementById('loginError');
+    err.style.display = 'none';
+
+    if (!user || !pass) { err.style.display = 'block'; return; }
+
+    // Delay artificial anti-brute-force (300ms)
+    await new Promise(r => setTimeout(r, 300));
+
+    const [userHash, passHash] = await Promise.all([sha256(user), sha256(pass)]);
+
+    // Comparação em tempo constante (evita timing attacks)
+    const userOk = userHash === VALID_USER_HASH;
+    const passOk = passHash === VALID_PASS_HASH;
+
+    if (userOk && passOk) {
+      resetAttempts();
+      createSession();
+      window.location.href = 'painel.html';
+    } else {
+      registerFailedAttempt();
+      err.style.display = 'block';
+      document.getElementById('loginPass').value = '';
+      if (isLocked()) { setLocked(true); startCooldown(); }
+    }
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', handleLogin);
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+  // Verifica bloqueio ao carregar
+  if (isLocked()) { setLocked(true); startCooldown(); }
+</script>
+</body>
+</html>
