@@ -109,11 +109,42 @@ function atualizarHero(artigo) {
 
 function renderizarCards(container, artigos) {
   const artigosSemHero = artigos.slice(1);
-  if (!a.slug) {
-  console.warn("Artigo sem slug ignorado:", a);
-  return;
+
+  artigosSemHero.forEach((a) => {
+    if (!a.slug) {
+      console.warn("Artigo sem slug ignorado:", a);
+      return;
+    }
+
+    const card = document.createElement("article");
+    card.className = "card";
+
+    const titulo = escaparHtml(a.titulo || "Sem título");
+    const subtitulo = escaparHtml(a.subtitulo || "");
+    const categoria = escaparHtml((a.categoria || "geral").toUpperCase());
+    const autor = escaparHtml(a.autor || "Redação");
+    const slug = encodeURIComponent(a.slug);
+    const imagem = a.imagem || "https://placehold.co/600x400/111/333?text=VANDALIZE";
+
+    card.innerHTML = `
+      <a href="artigo.html?slug=${slug}" class="card-link">
+        <div class="card-img-wrap">
+          <img src="${imagem}" alt="${titulo}" loading="lazy">
+        </div>
+        <div class="card-body">
+          <span class="card-tag">${categoria}</span>
+          <h2 class="card-title">${titulo}</h2>
+          <p class="card-excerpt">${subtitulo}</p>
+          <div class="card-meta">
+            <span>${autor}</span>
+          </div>
+        </div>
+      </a>
+    `;
+
+    container.appendChild(card);
+  });
 }
-  }
 
   artigosSemHero.forEach((a) => {
     const card = document.createElement("article");

@@ -227,3 +227,5 @@ function iniciarPainel() {
 window.formatar = (cmd, value = null) => {
   document.execCommand(cmd, false, value);
 };
+
+<script type="module" src="admin.js"></script>
