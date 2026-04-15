@@ -657,7 +657,7 @@
     }
   </style>
 </head>
-<body class="admin-body">
+<body class="admin-body" style="display:none;">
 
 
 <div class="admin-layout">
@@ -1308,7 +1308,7 @@
         <td>${index + 1}</td>
         <td>${email}</td>
         <td>
-          <button class="table-btn" onclick="removeSubscriber($,{index})">Remover</button>
+          <button class="table-btn" onclick="removeSubscriber(${index})">Remover</button>
         </td>
       </tr>
     `).join('');

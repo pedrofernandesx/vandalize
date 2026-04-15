@@ -32,7 +32,7 @@ if (loginForm) {
     try {
   const cred = await signInWithEmailAndPassword(auth, email, senha);
   console.log("LOGOU:", cred.user.email);
-  alert("LOGIN FUNCIONOU");
+console.log("Login OK");
 window.location.href = "./painel_admin.html";
     } catch (err) {
       console.error("Erro no login:", err);
@@ -43,6 +43,7 @@ window.location.href = "./painel_admin.html";
 
 // GUARD
 onAuthStateChanged(auth, (user) => {
+  document.body.style.display = "block";
   const path = window.location.pathname;
   const isPainel = path.includes("painel_admin.html");
   const isLogin = path.includes("login_admin.html");
@@ -226,10 +227,3 @@ function iniciarPainel() {
 window.formatar = (cmd, value = null) => {
   document.execCommand(cmd, false, value);
 };
-
-async function iniciarPainel() {
-  if (painelIniciado) return;
-  painelIniciado = true;
-
-  await listarArtigos();
-}

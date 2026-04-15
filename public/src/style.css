@@ -85,14 +85,13 @@ img { display: block; max-width: 100%; }
 }
 
 /* ─── HERO (home) ───────────────────────────────────────────────────────────── */
+
 .hero {
-  position: relative;
-  height: 100vh;
-  min-height: 600px;
-  display: flex;
-  align-items: flex-end;
-  padding-bottom: 5rem;
-  padding-left: 3rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.hero.ready {
+  opacity: 1;
 }
 
 .hero-img-wrap {

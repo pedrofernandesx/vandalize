@@ -8,8 +8,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 function formatarData(timestamp) {
-  const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  if (!timestamp) return "—";
+
+  const meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
   const d = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+
+  if (isNaN(d)) return "—";
+
   return `${String(d.getDate()).padStart(2, "0")} ${meses[d.getMonth()]} ${d.getFullYear()}`;
 }
 
@@ -76,26 +81,38 @@ export async function carregarArtigos(categoriaFiltro = null) {
 function atualizarHero(artigo) {
   if (!artigo) return;
 
+  const hero = document.getElementById("hero")?.classList.add("ready");
   const heroTag = document.getElementById("heroTag");
   const heroTitle = document.getElementById("heroTitle");
   const heroSubtitle = document.getElementById("heroSubtitle");
   const heroImg = document.getElementById("heroImg");
 
+  const slug = artigo.slug ? encodeURIComponent(artigo.slug) : null;
+
   if (heroTag) heroTag.textContent = (artigo.categoria || "geral").toUpperCase();
   if (heroTitle) heroTitle.textContent = artigo.titulo || "Sem título";
   if (heroSubtitle) heroSubtitle.textContent = artigo.subtitulo || "";
+
   if (heroImg) {
     heroImg.src = artigo.imagem || "https://placehold.co/1200x700/111/333?text=VANDALIZE";
     heroImg.alt = artigo.titulo || "Imagem do destaque";
+  }
+
+  // 🔥 TORNA CLICÁVEL
+  if (hero && slug) {
+    hero.style.cursor = "pointer";
+    hero.onclick = () => {
+      window.location.href = `artigo.html?slug=${slug}`;
+    };
   }
 }
 
 function renderizarCards(container, artigos) {
   const artigosSemHero = artigos.slice(1);
-
-  if (artigosSemHero.length === 0) {
-    container.innerHTML = `<p style="color:#888;padding:2rem">Só existe um artigo publicado no momento.</p>`;
-    return;
+  if (!a.slug) {
+  console.warn("Artigo sem slug ignorado:", a);
+  return;
+}
   }
 
   artigosSemHero.forEach((a) => {
@@ -106,7 +123,12 @@ function renderizarCards(container, artigos) {
     const subtitulo = escaparHtml(a.subtitulo || "");
     const categoria = escaparHtml((a.categoria || "geral").toUpperCase());
     const autor = escaparHtml(a.autor || "Redação");
-    const slug = encodeURIComponent(a.slug || "");
+const slug = a.slug ? encodeURIComponent(a.slug) : null;
+
+if (!slug) {
+  card.innerHTML = `<div class="card-body">Artigo inválido</div>`;
+  return;
+}
     const imagem = a.imagem || "https://placehold.co/600x400/111/333?text=VANDALIZE";
 
     card.innerHTML = `
@@ -197,7 +219,3 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 import { carregarArtigos } from "./app.js";
-
-document.addEventListener("DOMContentLoaded", () => {
-  carregarArtigos();
-});
