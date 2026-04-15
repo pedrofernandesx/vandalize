@@ -182,7 +182,7 @@ if (!slug) {
 
     container.appendChild(card);
   });
-}
+
 
 export async function carregarArtigoBySlug() {
   const params = new URLSearchParams(window.location.search);
