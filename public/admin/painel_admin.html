@@ -926,33 +926,154 @@
 </div>
 
 <div class="toast" id="toast"></div>
-
 <script type="module">
-  import { db } from "../src/firebase.js";
-  import {
-    collection,
-    addDoc,
-    getDocs,
-    deleteDoc,
-    doc,
-    updateDoc,
-    query,
-    orderBy
-  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { db } from "../src/firebase.js";
+import {
+  collection,
+  addDoc,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  window.db = db;
-  window.fb = {
-    collection,
-    addDoc,
-    getDocs,
-    deleteDoc,
-    doc,
-    updateDoc,
-    query,
-    orderBy
-  };
+/* =========================
+   UTIL
+========================= */
+
+function showToast(msg){
+  alert(msg);
+}
+
+/* =========================
+   NAVEGAÇÃO
+========================= */
+
+window.switchTab = function(tabName){
+  document.querySelectorAll('.panel-section').forEach(sec=>{
+    sec.classList.remove('active');
+  });
+
+  document.querySelectorAll('.admin-nav-item').forEach(item=>{
+    item.classList.remove('active');
+  });
+
+  const section = document.getElementById("tab-" + tabName);
+  const nav = document.querySelector(`.admin-nav-item[data-tab="${tabName}"]`);
+
+  if(section) section.classList.add("active");
+  if(nav) nav.classList.add("active");
+}
+
+/* =========================
+   SALVAR ARTIGO (FIRESTORE)
+========================= */
+
+async function saveArticle(publicado){
+
+  const titulo = document.getElementById("fTitle").value.trim();
+  const categoria = document.getElementById("fCategory").value;
+  const autor = document.getElementById("fAuthor").value;
+  const data = document.getElementById("fDate").value;
+  const resumo = document.getElementById("fExcerpt").value;
+  const imagem = document.getElementById("fImage").value;
+  const conteudo = document.getElementById("fBody").innerHTML;
+
+  if(!titulo){
+    showToast("Título obrigatório");
+    return;
+  }
+
+  const slug = titulo
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  try{
+    await addDoc(collection(db, "artigos"), {
+      titulo,
+      categoria,
+      autor,
+      data,
+      resumo,
+      imagem,
+      conteudo,
+      slug,
+      publicado,
+      criadoEm: Date.now()
+    });
+
+    showToast(publicado ? "Publicado com sucesso 🚀" : "Rascunho salvo");
+
+    limparFormulario();
+    carregarArtigos();
+
+    switchTab("articles");
+
+  }catch(err){
+    console.error(err);
+    showToast("Erro ao salvar");
+  }
+}
+
+/* =========================
+   LISTAR ARTIGOS
+========================= */
+
+async function carregarArtigos(){
+  const tbody = document.getElementById("articlesTableBody");
+  tbody.innerHTML = "";
+
+  const snap = await getDocs(collection(db, "artigos"));
+
+  if(snap.empty){
+    tbody.innerHTML = "<tr><td colspan='6'>Nenhum artigo</td></tr>";
+    return;
+  }
+
+  snap.forEach(docItem=>{
+    const a = docItem.data();
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${a.titulo}</td>
+      <td>${a.categoria}</td>
+      <td>${a.autor || "-"}</td>
+      <td>${a.publicado ? "Publicado" : "Rascunho"}</td>
+      <td>${a.data || "-"}</td>
+      <td>-</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+/* =========================
+   FORM
+========================= */
+
+function limparFormulario(){
+  document.getElementById("fTitle").value = "";
+  document.getElementById("fExcerpt").value = "";
+  document.getElementById("fImage").value = "";
+  document.getElementById("fBody").innerHTML = "";
+}
+
+/* =========================
+   BOTÕES
+========================= */
+
+document.getElementById("publishBtn")
+  .addEventListener("click", ()=> saveArticle(true));
+
+document.getElementById("saveDraftBtn")
+  .addEventListener("click", ()=> saveArticle(false));
+
+/* =========================
+   INIT
+========================= */
+
+carregarArtigos();
+
 </script>
-
   const categoryLabels = {
     musica: 'Música',
     carnaval: 'Carnaval',

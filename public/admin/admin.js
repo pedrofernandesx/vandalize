@@ -228,4 +228,28 @@ window.formatar = (cmd, value = null) => {
   document.execCommand(cmd, false, value);
 };
 
+window.switchTab = function(tab) {
+  // remove active de tudo
+  document.querySelectorAll(".panel-section").forEach(sec => {
+    sec.classList.remove("active");
+  });
+
+  document.querySelectorAll(".admin-nav-item").forEach(item => {
+    item.classList.remove("active");
+  });
+
+  // ativa a seção correta
+  const target = document.getElementById("tab-" + tab);
+  if (target) {
+    target.classList.add("active");
+  }
+
+  // ativa menu lateral
+  document.querySelectorAll(".admin-nav-item").forEach(item => {
+    if (item.dataset.tab === tab) {
+      item.classList.add("active");
+    }
+  });
+};
+
 <script type="module" src="admin.js"></script>
