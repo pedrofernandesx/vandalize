@@ -45,20 +45,20 @@ export async function carregarArtigos(categoriaFiltro = null) {
   container.innerHTML = `<p style="color:#888;padding:2rem 0">Carregando matérias...</p>`;
 
   try {
+    const artigosRef = collection(db, "artigos");
     let q;
-    const col = collection(db, "artigos");
 
     if (categoriaFiltro) {
-      q = query(col,
+      q = query(artigosRef,
         where("publicado", "==", true),
         where("categoria", "==", categoriaFiltro),
-        orderBy("data", "desc")
+        orderBy("criadoEm", "desc")
       );
     } else {
-      q = query(col,
-        where("publicado", "==", true),
-        orderBy("data", "desc")
-      );
+      q = query(artigosRef,
+  where("publicado", "==", true),
+  orderBy("criadoEm", "desc")
+);
     }
 
     const snap = await getDocs(q);
@@ -70,10 +70,8 @@ export async function carregarArtigos(categoriaFiltro = null) {
 
     const artigos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // Primeiro artigo vira o hero
     atualizarHero(artigos[0]);
 
-    // Restantes viram cards
     container.innerHTML = "";
     artigos.slice(1).forEach(a => {
       if (!a.slug) return;
@@ -82,187 +80,189 @@ export async function carregarArtigos(categoriaFiltro = null) {
 
   } catch (erro) {
     console.error("Erro ao carregar artigos:", erro);
-    container.innerHTML = `<p style="color:#c00;padding:2rem 0">
-      Erro ao carregar artigos. Verifique as regras do Firestore e os índices necessários.
-    </p>`;
+    container.innerHTML = `<p style="color:#c00;padding:2rem 0">Erro ao carregar artigos. Verifique o console.</p>`;
   }
 }
 
 function atualizarHero(artigo) {
   if (!artigo) return;
-
-  const heroEl      = document.getElementById("hero");
-  const heroTag     = document.getElementById("heroTag");
-  const heroTitle   = document.getElementById("heroTitle");
-  const heroSub     = document.getElementById("heroSubtitle");
-  const heroImg     = document.getElementById("heroImg");
-
-  if (heroTag)   heroTag.textContent   = (artigo.categoria || "geral").toUpperCase();
-  if (heroTitle) heroTitle.textContent = artigo.titulo    || "Sem título";
-  if (heroSub)   heroSub.textContent   = artigo.subtitulo || "";
-
-  if (heroImg) {
-    heroImg.src = artigo.imagem || "https://placehold.co/1200x700/111/333?text=VANDALIZE";
-    heroImg.alt = artigo.titulo || "Destaque";
-  }
-
-  if (heroEl && artigo.slug) {
-    heroEl.classList.add("ready");
+  
+  const heroEl = document.getElementById("hero");
+  if (heroEl) {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set("heroTag", (artigo.categoria || "geral").toUpperCase());
+    set("heroTitle", artigo.titulo || "Sem título");
+    set("heroSubtitle", artigo.resumo || "");
+    const img = document.getElementById("heroImg");
+    if (img) img.src = artigo.imagem || "https://placehold.co/1200x700/111/333?text=VANDALIZE";
+    
     heroEl.style.cursor = "pointer";
-    heroEl.onclick = () => {
-      window.location.href = `artigo.html?slug=${encodeURIComponent(artigo.slug)}`;
-    };
+    heroEl.onclick = () => { window.location.href = `artigo.html?slug=${encodeURIComponent(artigo.slug)}`; };
   }
 }
 
 function criarCard(a) {
   const card = document.createElement("article");
   card.className = "card";
-
-  const titulo    = escapar(a.titulo    || "Sem título");
-  const subtitulo = escapar(a.subtitulo || "");
-  const categoria = escapar((a.categoria || "geral").toUpperCase());
-  const autor     = escapar(a.autor     || "Redação");
-  const slug      = encodeURIComponent(a.slug);
-  const imagem    = a.imagem || "https://placehold.co/600x400/111/333?text=VANDALIZE";
-
+  const slug = encodeURIComponent(a.slug);
   card.innerHTML = `
     <a href="artigo.html?slug=${slug}" class="card-link">
       <div class="card-img-wrap">
-        <img src="${imagem}" alt="${titulo}" loading="lazy">
-        <span class="card-tag">${categoria}</span>
+        <img src="${a.imagem || 'https://placehold.co/600x400/111/333?text=VANDALIZE'}" alt="${escapar(a.titulo)}">
+        <span class="card-tag">${escapar((a.categoria || "geral").toUpperCase())}</span>
       </div>
       <div class="card-body">
-        <h2 class="card-title">${titulo}</h2>
-        <p class="card-excerpt">${subtitulo}</p>
+        <h2 class="card-title">${escapar(a.titulo)}</h2>
+        <p class="card-excerpt">${escapar(a.resumo)}</p>
         <div class="card-meta">
-          <span>${autor}</span>
+          <span>${escapar(a.autor || "Redação")}</span>
           <span class="dot">·</span>
-          <span>${formatarData(a.data)}</span>
-          <span class="dot">·</span>
-          <span>${tempoLeitura(a.conteudo)}</span>
+          <span>${formatarData(a.data || a.criadoEm)}</span>
         </div>
       </div>
     </a>
   `;
-
   return card;
 }
 
-// ─── ARTIGO: CARREGAR POR SLUG ────────────────────────────────────────────────
 
+// ─── ARTIGO: CARREGAR POR SLUG ────────────────────────────────────────────────
 export async function carregarArtigoBySlug() {
   const params = new URLSearchParams(window.location.search);
-  const slug   = params.get("slug");
-
-  if (!slug) { window.location.href = "index.html"; return; }
+  const slug = params.get("slug");
+  
+  // Se não houver slug, volta para a index imediatamente
+  if (!slug) { 
+    window.location.href = "index.html"; 
+    return; 
+  }
 
   try {
-    const q    = query(
-      collection(db, "artigos"),
-      where("slug",      "==", slug),
+    const q = query(
+      collection(db, "artigos"), 
+      where("slug", "==", slug), 
       where("publicado", "==", true)
     );
+    
     const snap = await getDocs(q);
-
-    if (snap.empty) { window.location.href = "index.html"; return; }
-
-    const a = snap.docs[0].data();
-
-    document.title = `${a.titulo} — Vandalize`;
-
-    const set = (id, value) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = value;
-    };
-
-    const heroImg = document.getElementById("hero-img");
-    if (heroImg) {
-      heroImg.src = a.imagem || "https://placehold.co/1200x700/111/333?text=VANDALIZE";
-      heroImg.alt = a.titulo || "";
+    
+    if (snap.empty) { 
+      window.location.href = "index.html"; 
+      return; 
     }
 
-    set("hero-tag",      (a.categoria || "GERAL").toUpperCase());
-    set("hero-titulo",    a.titulo    || "");
-    set("hero-subtitulo", a.subtitulo || "");
-    set("hero-autor",     a.autor     || "Redação");
-    set("hero-data",      formatarData(a.data));
-    set("hero-leitura",   tempoLeitura(a.conteudo || ""));
+    const a = snap.docs[0].data();
+    document.title = `${a.titulo} — Vandalize`;
 
+    // Função auxiliar para preencher texto
+    const set = (id, value) => { 
+      const el = document.getElementById(id); 
+      if (el) el.textContent = value; 
+    };
+
+    // 1. CARREGAR A IMAGEM (O ID deve ser heroImg no HTML)
+    const heroImg = document.getElementById("heroImg");
+    if (heroImg) {
+      heroImg.src = a.imagem || "https://placehold.co/1200x700/111/333?text=VANDALIZE";
+    }
+
+    // 2. PREENCHER OS CAMPOS (Consistência com o Banco)
+    set("hero-tag", (a.categoria || "GERAL").toUpperCase());
+    set("hero-titulo", a.titulo || "");
+    set("hero-resumo", a.resumo || a.subtitulo || ""); // Puxa resumo ou subtitulo
+    set("hero-autor", a.autor || "Redação");
+    set("hero-data", formatarData(a.data || a.criadoEm));
+    set("hero-leitura", tempoLeitura(a.conteudo || ""));
+
+    // 3. RENDERIZAR O CORPO
     const body = document.getElementById("artigo-body");
-    if (body) body.innerHTML = a.conteudo || "<p>Sem conteúdo.</p>";
+    if (body) {
+      body.innerHTML = a.conteudo || "<p>Sem conteúdo.</p>";
+    }
 
   } catch (erro) {
     console.error("Erro ao carregar artigo:", erro);
   }
 }
 
+async function carregarHeroUltimoPost() {
+  const heroEl = document.getElementById("hero");
+  if (!heroEl) return;
+
+  try {
+    const q = query(
+      collection(db, "artigos"),
+      where("publicado", "==", true),
+      orderBy("criadoEm", "desc")
+    );
+
+    const snap = await getDocs(q);
+    if (snap.empty) return;
+
+    const artigo = snap.docs[0].data();
+
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+
+    set("heroTag", (artigo.categoria || "geral").toUpperCase());
+    set("heroTitle", artigo.titulo || "");
+    set("heroSubtitle", artigo.resumo || "");
+
+    const img = document.getElementById("heroImg");
+    if (img) {
+      img.src = artigo.imagem || "https://placehold.co/1200x700";
+    }
+
+    heroEl.onclick = () => {
+      window.location.href = `artigo.html?slug=${artigo.slug}`;
+    };
+
+  } catch (e) {
+    console.error("Erro ao carregar HERO:", e);
+  }
+}
+
+
+
+
 // ─── NEWSLETTER ───────────────────────────────────────────────────────────────
 
 async function cadastrarNewsletter() {
   const input = document.getElementById("nlEmail");
-  const btn   = document.getElementById("nlBtn");
+  const btn = document.getElementById("nlBtn");
   if (!input || !btn) return;
-
   const email = input.value.trim();
-  if (!email || !email.includes("@")) {
-    input.style.borderColor = "#E03C2C";
-    setTimeout(() => input.style.borderColor = "", 2000);
-    return;
-  }
+  if (!email || !email.includes("@")) return;
 
-  btn.textContent = "...";
-  btn.disabled    = true;
-
+  btn.disabled = true;
   try {
-    await addDoc(collection(db, "newsletter"), {
-      email,
-      data: serverTimestamp()
-    });
-    input.value         = "";
-    btn.textContent     = "✓";
-    btn.style.background = "#4caf50";
-    setTimeout(() => {
-      btn.textContent      = "→";
-      btn.style.background = "";
-      btn.disabled         = false;
-    }, 3000);
+    await addDoc(collection(db, "newsletter"), { email, data: serverTimestamp() });
+    input.value = "";
+    btn.textContent = "✓";
+    setTimeout(() => { btn.textContent = "→"; btn.disabled = false; }, 3000);
   } catch (err) {
-    console.error("Erro newsletter:", err);
-    btn.textContent = "→";
-    btn.disabled    = false;
+    console.error(err);
+    btn.disabled = false;
   }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Index — carregar grid
   if (document.getElementById("cardsGrid")) {
     const cat = new URLSearchParams(window.location.search).get("cat");
     carregarArtigos(cat);
   }
 
-  // Artigo — carregar por slug
   if (document.getElementById("artigo-body")) {
     carregarArtigoBySlug();
+
+    // 🔥 ADICIONA ISSO AQUI
+    carregarHeroUltimoPost();
   }
 
-  // Newsletter
   const nlBtn = document.getElementById("nlBtn");
   if (nlBtn) nlBtn.addEventListener("click", cadastrarNewsletter);
-
-  const nlInput = document.getElementById("nlEmail");
-  if (nlInput) {
-    nlInput.addEventListener("keydown", e => {
-      if (e.key === "Enter") cadastrarNewsletter();
-    });
-  }
-
-  // Nav hamburguer
-  const hamburger = document.getElementById("hamburger");
-  const navLinks  = document.querySelector(".nav-links");
-  if (hamburger && navLinks) {
-    hamburger.addEventListener("click", () => navLinks.classList.toggle("open"));
-  }
 });

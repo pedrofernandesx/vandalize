@@ -1,194 +1,121 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Artigo — Vandalize</title>
+  <title>Vandalize — Jornalismo Cultural Independente</title>
+  <link rel="stylesheet" href="src/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    :root { --gold: #f5c518; }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      background: #fff;
-      color: #111;
-      font-family: 'Barlow', sans-serif;
-      font-size: 18px;
-      line-height: 1.7;
-    }
-
-  
-    .nav-logo {
-      font-family: 'Playfair Display', serif; font-weight: 900;
-      font-size: 1.4rem; letter-spacing: .04em;
-      color: var(--gold); text-decoration: none;
-    }
-    .nav-links { list-style: none; display: flex; gap: 1.8rem; }
-    .nav-links a {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: .78rem; font-weight: 600; letter-spacing: .1em;
-      color: #aaa; text-decoration: none; transition: color .2s;
-    }
-    .nav-links a:hover { color: var(--gold); }
-
-    /* HERO */
-    .article-hero {
-      position: relative; width: 100%;
-      height: clamp(420px, 70vw, 680px);
-      overflow: hidden; background: #111;
-    }
-    .article-hero img {
-      width: 100%; height: 100%;
-      object-fit: cover; object-position: center top; display: block;
-    }
-    .article-hero-overlay {
-      position: absolute; inset: 0;
-      background: linear-gradient(
-        to bottom,
-        rgba(0,0,0,0) 0%,
-        rgba(0,0,0,.15) 40%,
-        rgba(0,0,0,.72) 75%,
-        rgba(0,0,0,.85) 100%
-      );
-    }
-    .article-hero-content {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 2.5rem clamp(1.2rem, 6vw, 5rem);
-      max-width: 860px;
-    }
-    .tag {
-      display: inline-block;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: .72rem; font-weight: 700; letter-spacing: .14em;
-      background: var(--gold); color: #111;
-      padding: .2em .7em; margin-bottom: 1rem;
-    }
-    .article-title {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(2rem, 4.5vw, 3.4rem);
-      font-weight: 900; line-height: 1.12; color: #fff;
-      margin-bottom: 1rem; text-shadow: 0 2px 12px rgba(0,0,0,.3);
-    }
-    .article-subtitle {
-      font-family: 'Barlow', sans-serif;
-      font-size: clamp(.9rem, 1.4vw, 1.05rem);
-      font-weight: 400; color: rgba(255,255,255,.82);
-      line-height: 1.5; margin-bottom: 1.4rem; max-width: 640px;
-    }
-    .article-byline {
-      display: flex; align-items: center; gap: 1.2rem;
-      font-family: 'Barlow', sans-serif;
-      font-size: .82rem; color: rgba(255,255,255,.65);
-    }
-    .article-byline strong { color: #fff; font-weight: 600; }
-
-    /* BODY */
-    .article-body {
-      max-width: 740px; margin: 0 auto;
-      padding: 3rem clamp(1rem, 6vw, 2rem) 5rem;
-    }
-    .article-body p   { margin-bottom: 1.6rem; color: #222; font-size: 1rem; line-height: 1.8; }
-    .article-body h2  { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; margin: 3rem 0 1rem; color: #111; }
-    .article-body img { max-width: 100%; border-radius: 4px; margin: 1.5rem 0; }
-    .article-body blockquote {
-      border-left: 4px solid var(--gold); margin: 2rem 0;
-      padding: .5rem 1.5rem; color: #444; font-style: italic;
-    }
-
-    /* NEWSLETTER */
-    .section-newsletter { background: #111; padding: 4rem 2rem; }
-    .newsletter-inner { max-width: 600px; margin: 0 auto; text-align: center; }
-    .newsletter-title { font-family: 'Playfair Display', serif; font-size: 1.7rem; color: #fff; margin-bottom: .6rem; }
-    .newsletter-sub   { font-size: .9rem; color: #aaa; margin-bottom: 1.5rem; }
-    .newsletter-form  { display: flex; max-width: 420px; margin: 0 auto; }
-    .newsletter-input { flex: 1; padding: .75rem 1rem; border: none; font-family: 'Barlow', sans-serif; font-size: .95rem; outline: none; }
-    .newsletter-btn   { padding: .75rem 1.2rem; background: var(--gold); border: none; font-size: 1.1rem; cursor: pointer; transition: background .2s; }
-    .newsletter-btn:hover { background: #e0b000; }
-
-    /* FOOTER */
-    .footer { background: #0a0a0a; color: #aaa; padding: 3rem 2rem 1.5rem; }
-    .footer-inner {
-      max-width: 1100px; margin: 0 auto;
-      display: grid; grid-template-columns: 2fr 1fr 1fr;
-      gap: 2rem; padding-bottom: 2rem;
-      border-bottom: 1px solid #1f1f1f;
-    }
-    .footer-logo { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.3rem; letter-spacing: .04em; color: var(--gold); display: block; margin-bottom: .5rem; }
-    .footer-col  { display: flex; flex-direction: column; gap: .4rem; }
-    .footer-col-title { font-family: 'Barlow Condensed', sans-serif; font-size: .72rem; font-weight: 700; letter-spacing: .14em; color: #555; margin-bottom: .4rem; }
-    .footer-col a, .footer-col span { font-size: .85rem; color: #888; text-decoration: none; }
-    .footer-col a:hover { color: var(--gold); }
-    .footer-bottom { max-width: 1100px; margin: 1.2rem auto 0; display: flex; justify-content: space-between; font-size: .75rem; color: #555; }
-  </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav class="nav">
   <a href="index.html" class="nav-logo">VANDALIZE</a>
   <ul class="nav-links">
-    <li><a href="index.html">INÍCIO</a></li>
-    <li><a href="index.html?cat=musica">MÚSICA</a></li>
-    <li><a href="index.html?cat=carnaval">CARNAVAL</a></li>
-    <li><a href="index.html?cat=investigacao">INVESTIGAÇÃO</a></li>
+    <li><a href="index.html" class="active">INÍCIO</a></li>
+    <li><a href="?cat=musica">MÚSICA</a></li>
+    <li><a href="?cat=cultura">CULTURA</a></li>
+    <li><a href="?cat=investigacao">INVESTIGAÇÃO</a></li>
+    <li><a href="?cat=agenda">AGENDA</a></li>
     <li><a href="sobre.html">SOBRE</a></li>
   </ul>
+
+  <button class="nav-hamburger" id="hamburger">&#9776;</button>
 </nav>
 
-<!-- HERO: preenchido pelo app.js via Firestore -->
-<div class="article-hero">
-  <img id="hero-img" src="" alt="Capa do artigo" />
-  <div class="article-hero-overlay"></div>
-  <div class="article-hero-content">
-    <span class="tag" id="hero-tag">CARREGANDO</span>
-    <h1 class="article-title" id="hero-titulo"></h1>
-    <p class="article-subtitle" id="hero-subtitulo"></p>
-    <div class="article-byline">
-      <strong id="hero-autor"></strong>
-      <span id="hero-data"></span>
-      <span id="hero-leitura"></span>
-    </div>
+<!-- HERO -->
+
+<section class="article-hero-section" id="hero"> <div class="article-hero-img-wrap">
+    <img id="heroImg" src="" alt="Capa"> 
   </div>
-</div>
+  <div class="article-hero-overlay"></div>
+  
+  <div class="article-hero-content">
+    <span class="tag" id="heroTag"></span>
+    <h1 class="article-hero-title" id="heroTitle"></h1>
+    <p class="article-hero-subtitle" id="heroSubtitle"></p>
+  </div>
+</section>
+</section>
 
-<!-- CORPO DO ARTIGO: preenchido pelo app.js -->
-<div class="article-body" id="artigo-body">
-  <p style="color:#888">Carregando artigo...</p>
-</div>
-
-<section class="section-newsletter">
-  <div class="newsletter-inner">
-    <h3 class="newsletter-title">Não perca nada do que rola em Salvador</h3>
-    <p class="newsletter-sub">Sem spam, só conteúdo de verdade.</p>
-    <div class="newsletter-form">
-      <input type="email" placeholder="seu@email.com" class="newsletter-input" />
-      <button class="newsletter-btn">→</button>
+<!-- ÚLTIMAS MATÉRIAS -->
+<section class="section-latest">
+  <div class="container">
+    <div class="section-header">
+      <p class="section-label">ÚLTIMAS MATÉRIAS</p>
+      <h2 class="section-title">O que está acontecendo</h2>
+      <div class="title-bar"></div>
+    </div>
+    <div class="cards-grid" id="cardsGrid">
+      <!-- preenchido via JS -->
     </div>
   </div>
 </section>
 
-<footer class="footer">
-  <div class="footer-inner">
-    <div>
-      <span class="footer-logo">VANDALIZE</span>
-      <p>O jornal investigativo de cultura que Salvador merece.</p>
+<!-- MANIFESTO -->
+<section class="section-manifesto">
+  <div class="container manifesto-inner">
+    <div class="manifesto-text">
+      <p class="section-label">MANIFESTO</p>
+      <h2 class="manifesto-title">Salvador merece um jornalismo à altura da sua cultura</h2>
+      <p class="manifesto-body">Somos o Vandalize — o jornal investigativo que vai além da superfície. O Vandalize nasceu para contar histórias do jeito certo: com profundidade, sem pressa, sem concessões.</p>
+      <a href="sobre.html" class="link-arrow">CONHEÇA NOSSA HISTÓRIA →</a>
     </div>
+
+    <div class="manifesto-stats">
+      <div class="stat-card"><span class="stat-number">+200</span><span class="stat-label">MATÉRIAS</span></div>
+      <div class="stat-card"><span class="stat-number">8</span><span class="stat-label">EDITORIAS</span></div>
+      <div class="stat-card"><span class="stat-number">24h</span><span class="stat-label">COBERTURA</span></div>
+      <div class="stat-card"><span class="stat-number">SSA</span><span class="stat-label">SALVADOR, BA</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- NEWSLETTER -->
+<section class="section-newsletter">
+  <div class="container newsletter-inner">
+    <h3 class="newsletter-title">Fique por dentro de tudo</h3>
+    <p class="newsletter-sub">Sem spam, só conteúdo de verdade.</p>
+    <div class="newsletter-form">
+      <input type="email" placeholder="seu@email.com" class="newsletter-input" id="nlEmail" />
+      <button class="newsletter-btn" id="nlBtn">→</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <span class="footer-logo">VANDALIZE</span>
+      <p>Jornal investigativo que vai além da superfície. 
+O Vandalize nasceu para contar histórias do jeito certo: com profundidade, sem pressa, sem concessões.</p>
+    </div>
+
     <div class="footer-col">
       <p class="footer-col-title">CATEGORIAS</p>
-      <a href="index.html?cat=musica">Música</a>
-      <a href="index.html?cat=carnaval">Carnaval</a>
-      <a href="index.html?cat=capoeira">Capoeira</a>
-      <a href="index.html?cat=noite">Noite</a>
-      <a href="index.html?cat=investigacao">Investigação</a>
+      <a href="?cat=musica">Música</a>
+      <a href="?cat=cultura">Cultura</a>
+      <a href="?cat=agenda">Agenda</a>
+       <a href="?cat=investigacao">Investigação</a>
     </div>
+    
     <div class="footer-col">
       <p class="footer-col-title">CONTATO</p>
       <a href="mailto:redacao@vandalize.com.br">redacao@vandalize.com.br</a>
       <span>Salvador, Bahia — Brasil</span>
+      <span>Pelourinho, Centro Histórico</span>
     </div>
+
   </div>
+
   <div class="footer-bottom">
     <span>© 2026 Vandalize. Todos os direitos reservados.</span>
-    <span>JORNALISMO CULTURAL INDEPENDENTE</span>
+    <span class="footer-tagline">JORNALISMO CULTURAL INDEPENDENTE</span>
   </div>
+
 </footer>
 
 <!-- Firebase: carrega artigo pelo slug da URL -->

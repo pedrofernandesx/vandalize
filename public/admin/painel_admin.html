@@ -754,9 +754,8 @@
           <select class="form-select" id="filterCat" style="width:200px;">
             <option value="">Todas categorias</option>
             <option value="musica">Música</option>
-            <option value="carnaval">Carnaval</option>
-            <option value="capoeira">Capoeira</option>
-            <option value="noite">Noite</option>
+            <option value="agenda">Agenda</option>
+            <option value="cultura">Cultura</option>
             <option value="investigacao">Investigação</option>
           </select>
           <button class="btn btn-primary" onclick="switchTab('new-article')">+ Nova Matéria</button>
@@ -806,9 +805,8 @@
             <label class="form-label">Categoria</label>
             <select id="fCategory" class="form-select">
               <option value="musica">Música</option>
-              <option value="carnaval">Carnaval</option>
-              <option value="capoeira">Capoeira</option>
-              <option value="noite">Noite</option>
+              <option value="agenda">Agenda</option>
+              <option value="cultura">Cultura</option>
               <option value="investigacao">Investigação</option>
             </select>
           </div>
@@ -931,44 +929,105 @@ import { db } from "../src/firebase.js";
 import {
   collection,
   addDoc,
-  getDocs
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-/* =========================
-   UTIL
-========================= */
-
-function showToast(msg){
-  alert(msg);
+/* TOAST */
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
 }
 
-/* =========================
-   NAVEGAÇÃO
-========================= */
+/* NAVEGAÇÃO */
+window.switchTab = function(tabName) {
+  // Se mudar para a aba de 'new-article' e não houver ID de edição, limpa o formulário
+  if (tabName === 'new-article' && !document.getElementById("editingId").value) {
+    limparFormulario();
+    document.getElementById("formTitle").textContent = "Nova Matéria";
+  }
 
-window.switchTab = function(tabName){
-  document.querySelectorAll('.panel-section').forEach(sec=>{
-    sec.classList.remove('active');
-  });
+  document.querySelectorAll('.panel-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
 
-  document.querySelectorAll('.admin-nav-item').forEach(item=>{
-    item.classList.remove('active');
-  });
+  const targetTab = document.getElementById("tab-" + tabName);
+  const targetNav = document.querySelector(`[data-tab="${tabName}"]`);
+  
+  if (targetTab) targetTab.classList.add("active");
+  if (targetNav) targetNav.classList.add("active");
+};
 
-  const section = document.getElementById("tab-" + tabName);
-  const nav = document.querySelector(`.admin-nav-item[data-tab="${tabName}"]`);
-
-  if(section) section.classList.add("active");
-  if(nav) nav.classList.add("active");
+/* LIMPAR FORMULÁRIO */
+function limparFormulario() {
+  document.getElementById("editingId").value = "";
+  document.getElementById("fTitle").value = "";
+  document.getElementById("fExcerpt").value = "";
+  document.getElementById("fImage").value = "";
+  document.getElementById("fBody").innerHTML = "";
+  document.getElementById("fReadTime").value = "";
+  document.getElementById("fAuthor").value = "";
+  document.getElementById("fDate").value = "";
+  document.getElementById("fImagePreviewWrap").style.display = "none";
 }
 
-/* =========================
-   SALVAR ARTIGO (FIRESTORE)
-========================= */
+/* CARREGAR DADOS PARA EDIÇÃO */
+window.prepararEdicao = async (id) => {
+  try {
+    const docRef = doc(db, "artigos", id);
+    const snap = await getDoc(docRef);
 
-async function saveArticle(publicado){
+    if (snap.exists()) {
+      const a = snap.data();
+      
+      document.getElementById("editingId").value = id;
+      document.getElementById("fTitle").value = a.titulo || "";
+      document.getElementById("fCategory").value = a.categoria || "musica";
+      document.getElementById("fAuthor").value = a.autor || "";
+      document.getElementById("fReadTime").value = a.tempoLeitura || "";
+      document.getElementById("fDate").value = a.data || "";
+      document.getElementById("fExcerpt").value = a.resumo || "";
+      document.getElementById("fImage").value = a.imagem || "";
+      document.getElementById("fBody").innerHTML = a.conteudo || "";
+      
+      document.getElementById("formTitle").textContent = "Editando Matéria";
+      
+      if(a.imagem) {
+        document.getElementById("fImagePreview").src = a.imagem;
+        document.getElementById("fImagePreviewWrap").style.display = "block";
+      }
+      
+      window.switchTab("new-article");
+    }
+  } catch (err) {
+    console.error(err);
+    showToast("Erro ao carregar matéria.");
+  }
+};
 
+/* EXCLUIR MATÉRIA */
+window.excluirMateria = async (id) => {
+  if (confirm("Deseja excluir permanentemente?")) {
+    try {
+      await deleteDoc(doc(db, "artigos", id));
+      showToast("Matéria excluída.");
+    } catch (err) {
+      showToast("Erro ao excluir.");
+    }
+  }
+};
+
+/* SALVAR NO FIRESTORE (NOVO OU EDIÇÃO) */
+async function saveArticle(publicado) {
+  const idEdicao = document.getElementById("editingId").value;
   const titulo = document.getElementById("fTitle").value.trim();
+  const tempoLeitura = document.getElementById("fReadTime").value;
   const categoria = document.getElementById("fCategory").value;
   const autor = document.getElementById("fAuthor").value;
   const data = document.getElementById("fDate").value;
@@ -976,655 +1035,95 @@ async function saveArticle(publicado){
   const imagem = document.getElementById("fImage").value;
   const conteudo = document.getElementById("fBody").innerHTML;
 
-  if(!titulo){
-    showToast("Título obrigatório");
+  if (!titulo) {
+    showToast("Título é obrigatório");
     return;
   }
 
-  const slug = titulo
-    .toLowerCase()
+  const slug = titulo.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
-  try{
-    await addDoc(collection(db, "artigos"), {
-      titulo,
-      categoria,
-      autor,
-      data,
-      resumo,
-      imagem,
-      conteudo,
-      slug,
-      publicado,
-      criadoEm: Date.now()
-    });
-
-    showToast(publicado ? "Publicado com sucesso 🚀" : "Rascunho salvo");
-
-    limparFormulario();
-    carregarArtigos();
-
-    switchTab("articles");
-
-  }catch(err){
-    console.error(err);
-    showToast("Erro ao salvar");
-  }
-}
-
-/* =========================
-   LISTAR ARTIGOS
-========================= */
-
-async function carregarArtigos(){
-  const tbody = document.getElementById("articlesTableBody");
-  tbody.innerHTML = "";
-
-  const snap = await getDocs(collection(db, "artigos"));
-
-  if(snap.empty){
-    tbody.innerHTML = "<tr><td colspan='6'>Nenhum artigo</td></tr>";
-    return;
-  }
-
-  snap.forEach(docItem=>{
-    const a = docItem.data();
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${a.titulo}</td>
-      <td>${a.categoria}</td>
-      <td>${a.autor || "-"}</td>
-      <td>${a.publicado ? "Publicado" : "Rascunho"}</td>
-      <td>${a.data || "-"}</td>
-      <td>-</td>
-    `;
-
-    tbody.appendChild(tr);
-  });
-}
-
-/* =========================
-   FORM
-========================= */
-
-function limparFormulario(){
-  document.getElementById("fTitle").value = "";
-  document.getElementById("fExcerpt").value = "";
-  document.getElementById("fImage").value = "";
-  document.getElementById("fBody").innerHTML = "";
-}
-
-/* =========================
-   BOTÕES
-========================= */
-
-document.getElementById("publishBtn")
-  .addEventListener("click", ()=> saveArticle(true));
-
-document.getElementById("saveDraftBtn")
-  .addEventListener("click", ()=> saveArticle(false));
-
-/* =========================
-   INIT
-========================= */
-
-carregarArtigos();
-
-</script>
-  const categoryLabels = {
-    musica: 'Música',
-    carnaval: 'Carnaval',
-    capoeira: 'Capoeira',
-    noite: 'Noite',
-    investigacao: 'Investigação'
+  const dados = {
+    titulo, tempoLeitura, categoria, autor, data,
+    resumo, imagem, conteudo, slug, publicado,
+    criadoEm: Date.now()
   };
 
-  let lastSubscribersCount = 0;
-
-  function showToast(message) {
-    const toast = document.getElementById('toast');
-    toast.textContent = message;
-    toast.classList.add('show');
-    clearTimeout(showToast._timer);
-    showToast._timer = setTimeout(() => {
-      toast.classList.remove('show');
-    }, 2400);
-  },
-
-  function switchTab(tabName) {
-    document.querySelectorAll('.panel-section').forEach(section => {
-      section.classList.remove('active');
-    });
-    document.querySelectorAll('.admin-nav-item[data-tab]').forEach(item => {
-      item.classList.remove('active');
-    });
-
-    const section = document.getElementById(`tab-${tabName}`);
-    const navItem = document.querySelector(`.admin-nav-item[data-tab="${tabName}"]`);
-
-    if (section) section.classList.add('active');
-    if (navItem) navItem.classList.add('active');
-
-    if (tabName === 'dashboard') renderDashboard();
-    if (tabName === 'articles') renderArticles();
-    if (tabName === 'images') renderImages();
-    if (tabName === 'subscribers') renderSubscribers();
-    if (tabName === 'new-article') renderCoverPicker();
-  }
-
-  function formatDate(dateStr) {
-    if (!dateStr) return '—';
-    const d = new Date(dateStr + 'T00:00:00');
-    return d.toLocaleDateString('pt-BR');
-  }
-
-  function formatCategory(cat) {
-    return categoryLabels[cat] || cat;
-  }
-
-  function getArticles() {
-    return getData(STORAGE_KEYS.articles, []);
-  }
-
-  function saveArticles(articles) {
-    setData(STORAGE_KEYS.articles, articles);
-    renderDashboard();
-    renderArticles();
-  }
-
-  function getImages() {
-    return getData(STORAGE_KEYS.images, []);
-  }
-
-  function saveImages(images) {
-    setData(STORAGE_KEYS.images, images);
-    renderImages();
-    renderCoverPicker();
-    renderDashboard();
-  }
-
-  function getSubscribers() {
-    return getData(STORAGE_KEYS.subscribers, []);
-  }
-
-  function saveSubscribers(subscribers) {
-    setData(STORAGE_KEYS.subscribers, subscribers);
-    updateSubscribersUI();
-    renderSubscribers();
-    renderDashboard();
-  }
-
-  function renderDashboard() {
-    const articles = getArticles();
-    const images = getImages();
-    const subscribers = getSubscribers();
-
-    const published = articles.filter(a => a.status === 'published').length;
-    const drafts = articles.filter(a => a.status === 'draft').length;
-
-    document.getElementById('statPublished').textContent = published;
-    document.getElementById('statDrafts').textContent = drafts;
-    document.getElementById('statImages').textContent = images.length;
-
-    updateSubscribersUI();
-
-    const recentBody = document.getElementById('dashRecentBody');
-    const sorted = [...articles].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 6);
-
-    if (!sorted.length) {
-      recentBody.innerHTML = `<tr><td colspan="6" class="empty-state">Nenhuma matéria cadastrada ainda.</td></tr>`;
-      return;
-    }
-
-    recentBody.innerHTML = sorted.map(article => `
-      <tr>
-        <td>${article.title}</td>
-        <td>${formatCategory(article.category)}</td>
-        <td>${article.author || '—'}</td>
-        <td>
-          <span class="status-badge ${article.status === 'published' ? 'status-published' : 'status-draft'}">
-            ${article.status === 'published' ? 'Publicado' : 'Rascunho'}
-          </span>
-        </td>
-        <td>${formatDate(article.date)}</td>
-        <td>
-          <button class="table-btn" onclick="editArticle('${article.id}')">Editar</button>
-        </td>
-      </tr>
-    `).join('');
-  }
-
-  function renderArticles() {
-    const tbody = document.getElementById('articlesTableBody');
-    const filter = document.getElementById('filterCat').value;
-    let articles = getArticles();
-
-    if (filter) {
-      articles = articles.filter(a => a.category === filter);
-    }
-
-    articles = [...articles].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-    if (!articles.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Nenhuma matéria encontrada.</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = articles.map(article => `
-      <tr>
-        <td>${article.title}</td>
-        <td>${formatCategory(article.category)}</td>
-        <td>${article.author || '—'}</td>
-        <td>
-          <span class="status-badge ${article.status === 'published' ? 'status-published' : 'status-draft'}">
-            ${article.status === 'published' ? 'Publicado' : 'Rascunho'}
-          </span>
-        </td>
-        <td>${formatDate(article.date)}</td>
-        <td>
-          <div class="table-actions">
-            <button class="table-btn" onclick="editArticle('${article.id}')">Editar</button>
-            <button class="table-btn" onclick="deleteArticle('${article.id}')">Excluir</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-  }
-
-  function resetForm() {
-    document.getElementById('editingId').value = '';
-    document.getElementById('formTitle').textContent = 'Nova Matéria';
-    document.getElementById('fTitle').value = '';
-    document.getElementById('fCategory').value = 'musica';
-    document.getElementById('fAuthor').value = '';
-    document.getElementById('fReadTime').value = '';
-    document.getElementById('fDate').value = '';
-    document.getElementById('fExcerpt').value = '';
-    document.getElementById('fImage').value = '';
-    document.getElementById('fBody').innerHTML = '';
-    updateImagePreview();
-  }
-
-  function getFormArticle(status) {
-    const title = document.getElementById('fTitle').value.trim();
-    const category = document.getElementById('fCategory').value;
-    const author = document.getElementById('fAuthor').value.trim();
-    const readTime = document.getElementById('fReadTime').value.trim();
-    const date = document.getElementById('fDate').value;
-    const excerpt = document.getElementById('fExcerpt').value.trim();
-    const image = document.getElementById('fImage').value.trim();
-    const body = document.getElementById('fBody').innerHTML.trim();
-
-    if (!title) {
-      showToast('Informe o título da matéria.');
-      return null;
-    }
-
-    return { title, category, author, readTime, date, excerpt, image, body, status };
-  }
-
-  function saveArticle(status) {
-    const data = getFormArticle(status);
-    if (!data) return;
-
-    const articles = getArticles();
-    const editingId = document.getElementById('editingId').value.trim();
-
-    if (editingId) {
-      const index = articles.findIndex(a => a.id === editingId);
-      if (index !== -1) {
-        articles[index] = {
-          ...articles[index],
-          ...data
-        };
-      }
-      showToast(status === 'published' ? 'Matéria atualizada e publicada.' : 'Rascunho atualizado.');
+  try {
+    if (idEdicao) {
+      await updateDoc(doc(db, "artigos", idEdicao), dados);
+      showToast("Matéria atualizada!");
     } else {
-      articles.unshift({
-        id: crypto.randomUUID(),
-        ...data,
-        createdAt: Date.now()
-      });
-      showToast(status === 'published' ? 'Matéria publicada com sucesso.' : 'Rascunho salvo.');
+      dados.criadoEm = Date.now();
+      await addDoc(collection(db, "artigos"), dados);
+      showToast("Nova matéria publicada!");
     }
 
-    saveArticles(articles);
-    resetForm();
-    switchTab('articles');
+    limparFormulario();
+    window.switchTab("articles");
+  } catch (error) {
+    showToast("Erro ao salvar.");
   }
+}
 
-  function editArticle(id) {
-    const article = getArticles().find(a => a.id === id);
-    if (!article) return;
+/* LISTENER EM TEMPO REAL */
+function carregarArtigos() {
+  const tbody = document.getElementById("articlesTableBody");
+  const dashBody = document.getElementById("dashRecentBody");
+  const q = query(collection(db, "artigos"), orderBy("criadoEm", "desc"));
 
-    switchTab('new-article');
+  onSnapshot(q, (snap) => {
+    tbody.innerHTML = "";
+    dashBody.innerHTML = "";
+    let publicados = 0, rascunhos = 0, count = 0;
 
-    document.getElementById('editingId').value = article.id;
-    document.getElementById('formTitle').textContent = 'Editar Matéria';
-    document.getElementById('fTitle').value = article.title || '';
-    document.getElementById('fCategory').value = article.category || 'musica';
-    document.getElementById('fAuthor').value = article.author || '';
-    document.getElementById('fReadTime').value = article.readTime || '';
-    document.getElementById('fDate').value = article.date || '';
-    document.getElementById('fExcerpt').value = article.excerpt || '';
-    document.getElementById('fImage').value = article.image || '';
-    document.getElementById('fBody').innerHTML = article.body || '';
+    snap.forEach(docItem => {
+      const a = docItem.data();
+      const id = docItem.id;
+      if (a.publicado) publicados++; else rascunhos++;
 
-    updateImagePreview();
-  }
-
-  function deleteArticle(id) {
-    const ok = confirm('Deseja excluir esta matéria?');
-    if (!ok) return;
-
-    const updated = getArticles().filter(a => a.id !== id);
-    saveArticles(updated);
-    showToast('Matéria excluída.');
-  }
-
-  function renderImages() {
-    const library = document.getElementById('imagesLibrary');
-    const images = getImages();
-    document.getElementById('imgCount').textContent = images.length;
-
-    if (!images.length) {
-      library.innerHTML = `<div class="empty-state">Nenhuma imagem na biblioteca.</div>`;
-      toggleDeleteSelected();
-      return;
-    }
-
-    library.innerHTML = images.map(img => `
-      <div class="image-card">
-        <input type="checkbox" class="image-checkbox" data-id="${img.id}" onchange="toggleDeleteSelected()" />
-        <img src="${img.url}" alt="${img.name}">
-        <div class="image-card-body">
-          <small>${img.name}</small>
-          <button class="image-select-btn" onclick="useImageAsCover('${img.url}')">Usar como capa</button>
-        </div>
-      </div>
-    `).join('');
-
-    toggleDeleteSelected();
-  }
-
-  function renderCoverPicker() {
-    const picker = document.getElementById('coverImagePicker');
-    const images = getImages();
-
-    if (!images.length) {
-      picker.innerHTML = `<div class="empty-state">Nenhuma imagem disponível na biblioteca.</div>`;
-      return;
-    }
-
-    picker.innerHTML = images.map(img => `
-      <div class="image-card">
-        <img src="${img.url}" alt="${img.name}">
-        <div class="image-card-body">
-          <small>${img.name}</small>
-          <button class="image-select-btn" onclick="useImageAsCover('${img.url}')">Selecionar</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  function useImageAsCover(url) {
-    document.getElementById('fImage').value = url;
-    updateImagePreview();
-    showToast('Imagem de capa selecionada.');
-    switchTab('new-article');
-  }
-
-  function updateImagePreview() {
-    const url = document.getElementById('fImage').value.trim();
-    const wrap = document.getElementById('fImagePreviewWrap');
-    const img = document.getElementById('fImagePreview');
-
-    if (!url) {
-      wrap.style.display = 'none';
-      img.src = '';
-      return;
-    }
-
-    img.src = url;
-    wrap.style.display = 'block';
-  }
-
-  function toggleDeleteSelected() {
-    const checked = [...document.querySelectorAll('.image-checkbox:checked')];
-    document.getElementById('deleteSelectedBtn').style.display = checked.length ? 'inline-flex' : 'none';
-  }
-
-  function deleteSelectedImages() {
-    const checkedIds = [...document.querySelectorAll('.image-checkbox:checked')].map(el => el.dataset.id);
-    if (!checkedIds.length) return;
-
-    const ok = confirm(`Excluir ${checkedIds.length} imagem(ns)?`);
-    if (!ok) return;
-
-    const updated = getImages().filter(img => !checkedIds.includes(img.id));
-    saveImages(updated);
-    showToast('Imagem(ns) excluída(s).');
-  }
-
-  function renderSubscribers() {
-    const tbody = document.getElementById('subsTableBody');
-    const subs = getSubscribers();
-    const subsEmpty = document.getElementById('subsEmpty');
-
-    updateSubscribersUI();
-
-    if (!subs.length) {
-      tbody.innerHTML = '';
-      subsEmpty.style.display = 'block';
-      return;
-    }
-
-    subsEmpty.style.display = 'none';
-
-    tbody.innerHTML = subs.map((email, index) => `
-      <tr>
-        <td>${index + 1}</td>
-        <td>${email}</td>
-        <td>
-          <button class="table-btn" onclick="removeSubscriber(${index})">Remover</button>
+      const trHtml = `
+        <td>${a.titulo}</td>
+        <td><span style="text-transform:capitalize">${a.categoria}</span></td>
+        <td>${a.autor || "-"}</td>
+        <td><span class="status-badge ${a.publicado ? 'status-published' : 'status-draft'}">
+          ${a.publicado ? "Publicado" : "Rascunho"}
+        </span></td>
+        <td>${a.data || "-"}</td>
+        <td class="table-actions">
+           <button class="table-btn" onclick="prepararEdicao('${id}')">Editar</button>
+           <button class="table-btn" onclick="excluirMateria('${id}')">Excluir</button>
         </td>
-      </tr>
-    `).join('');
-  }
+      `;
 
-  function removeSubscriber(index) {
-    const subs = getSubscribers();
-    const email = subs[index];
-    if (!email) return;
+      const tr = document.createElement("tr");
+      tr.innerHTML = trHtml;
+      tbody.appendChild(tr);
 
-    const ok = confirm(`Remover o assinante ${email}?`);
-    if (!ok) return;
-
-    subs.splice(index, 1);
-    saveSubscribers(subs);
-    showToast('Assinante removido.');
-  }
-
-  function exportSubscribersCSV() {
-    const subs = getSubscribers();
-    if (!subs.length) {
-      showToast('Não há assinantes para exportar.');
-      return;
-    }
-
-    const csv = ['email', ...subs].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'assinantes-vandalize.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('CSV exportado com sucesso.');
-  }
-
-  function updateSubscribersUI() {
-    const subs = getSubscribers();
-    const current = subs.length;
-
-    const targets = [
-      document.getElementById('subsLiveCount'),
-      document.getElementById('subsCount'),
-      document.getElementById('subsHeaderLive'),
-      document.getElementById('subsPageLive')
-    ];
-
-    targets.forEach(el => {
-      if (el) el.textContent = current;
-    });
-
-    const liveEl = document.getElementById('subsLiveCount');
-    if (liveEl && current > lastSubscribersCount) {
-      liveEl.style.transform = 'scale(1.08)';
-      setTimeout(() => {
-        liveEl.style.transform = 'scale(1)';
-      }, 180);
-    }
-
-    lastSubscribersCount = current;
-  }
-
-  function execCmd(command, value = null) {
-    document.execCommand(command, false, value);
-  }
-
-  function clearFormat() {
-    document.execCommand('removeFormat', false, null);
-  }
-
-  function createLinkCmd() {
-    const url = prompt('Insira a URL do link:');
-    if (url) {
-      document.execCommand('createLink', false, url);
-    }
-  }
-
-  function handleImageUpload(files) {
-    const images = getImages();
-    const validFiles = [...files].filter(file => {
-      const isImage = file.type.startsWith('image/');
-      const sizeOk = file.size <= 5 * 1024 * 1024;
-      return isImage && sizeOk;
-    });
-
-    if (!validFiles.length) {
-      showToast('Nenhuma imagem válida enviada.');
-      return;
-    }
-
-    let processed = 0;
-
-    validFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        images.unshift({
-          id: crypto.randomUUID(),
-          name: file.name,
-          url: e.target.result
-        });
-
-        processed++;
-        if (processed === validFiles.length) {
-          saveImages(images);
-          showToast(`${validFiles.length} imagem(ns) adicionada(s).`);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-
-  function setupRealtimeSubscribersDemo() {
-    setInterval(() => {
-      updateSubscribersUI();
-    }, 2000);
-
-    window.addEventListener('storage', (event) => {
-      if (event.key === STORAGE_KEYS.subscribers) {
-        updateSubscribersUI();
-        renderSubscribers();
-        renderDashboard();
-      }
-      if (event.key === STORAGE_KEYS.articles) {
-        renderArticles();
-        renderDashboard();
-      }
-      if (event.key === STORAGE_KEYS.images) {
-        renderImages();
-        renderCoverPicker();
-        renderDashboard();
+      if (count < 5) {
+        const trDash = document.createElement("tr");
+        trDash.innerHTML = trHtml;
+        dashBody.appendChild(trDash);
+        count++;
       }
     });
-  }
 
-  document.querySelectorAll('.admin-nav-item[data-tab]').forEach(item => {
-    item.addEventListener('click', () => switchTab(item.dataset.tab));
+    document.getElementById("statPublished").textContent = publicados;
+    document.getElementById("statDrafts").textContent = rascunhos;
   });
+}
 
-  document.getElementById('filterCat').addEventListener('change', renderArticles);
-  document.getElementById('saveDraftBtn').addEventListener('click', () => saveArticle('draft'));
-  document.getElementById('publishBtn').addEventListener('click', () => saveArticle('published'));
-  document.getElementById('fImage').addEventListener('input', updateImagePreview);
-  document.getElementById('deleteSelectedBtn').addEventListener('click', deleteSelectedImages);
-  document.getElementById('exportSubsBtn').addEventListener('click', exportSubscribersCSV);
+/* EVENTOS */
+document.getElementById("publishBtn").onclick = () => saveArticle(true);
+document.getElementById("saveDraftBtn").onclick = () => saveArticle(false);
 
+document.querySelectorAll('.admin-nav-item[data-tab]').forEach(i => {
+  i.onclick = () => window.switchTab(i.dataset.tab);
+});
 
-
-  const dropZone = document.getElementById('dropZone');
-  const imgUpload = document.getElementById('imgUpload');
-
-  imgUpload.addEventListener('change', e => {
-    handleImageUpload(e.target.files);
-    e.target.value = '';
-  });
-
-  ['dragenter', 'dragover'].forEach(evt => {
-    dropZone.addEventListener(evt, e => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropZone.classList.add('dragover');
-    });
-  });
-
-  ['dragleave', 'drop'].forEach(evt => {
-    dropZone.addEventListener(evt, e => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropZone.classList.remove('dragover');
-    });
-  });
-
-  dropZone.addEventListener('drop', e => {
-    const files = e.dataTransfer.files;
-    handleImageUpload(files);
-  });
-
-  seedDemoData();
-  resetForm();
-  renderDashboard();
-  renderArticles();
-  renderImages();
-  renderCoverPicker();
-  renderSubscribers();
-  setupRealtimeSubscribersDemo();
-
-  /* opcional para testar contador ao vivo no console:
-     addSubscriber('novo@email.com')
-  */
-  function addSubscriber(email) {
-    const subs = getSubscribers();
-    if (!subs.includes(email)) {
-      subs.unshift(email);
-      saveSubscribers(subs);
-    }
-  }
+carregarArtigos();
 </script>
 </body>
 </html>
